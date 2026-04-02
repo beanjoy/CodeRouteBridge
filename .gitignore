@@ -12,3 +12,5 @@ build/Release/*
 *.obj
 *.tlog
 *.recipe
+.vs/
+*.aps
