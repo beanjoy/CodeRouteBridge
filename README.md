@@ -4,7 +4,7 @@
 
 ## Build
 
-Double-click [build_release.bat](/D:/4456/Desktop/VsProtocolHandler/CodeRouteBridge/build_release.bat) to build the `Release` x64 version.
+Double-click `build_release.bat` to build the `Release` x64 version.
 
 After build:
 
@@ -28,7 +28,7 @@ Keep and edit `build\Release\CodeRouteBridge.ini`.
 
 Main options in `CodeRouteBridge.ini`:
 
-- `VsCodePath`: path to the real VS Code executable
+- `VsCodePath`: path to the real VS Code executable; environment variables such as `%LOCALAPPDATA%` are supported
 - `ForceOpenInVsCode`: `1` means always forward to VS Code
 - `ShowMainWindow`: `1` means keep the diagnostics window visible
 - `WaitForDocumentMs`: max wait time before navigating in Visual Studio

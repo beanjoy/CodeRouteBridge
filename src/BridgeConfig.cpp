@@ -4,7 +4,7 @@
 
 namespace
 {
-constexpr wchar_t kDefaultVsCodePath[] = L"C:\\Users\\4456\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe";
+constexpr wchar_t kDefaultVsCodePath[] = L"%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\Code.exe";
 constexpr wchar_t kConfigFileName[] = L"CodeRouteBridge.ini";
 
 std::wstring GetExeDirectory()
@@ -39,6 +39,30 @@ std::wstring ReadIniString(const wchar_t* key, const wchar_t* defaultValue, cons
     return buffer;
 }
 
+std::wstring ExpandEnvironmentVariables(const std::wstring& value)
+{
+    if (value.empty())
+    {
+        return value;
+    }
+
+    const DWORD requiredLength = ExpandEnvironmentStringsW(value.c_str(), nullptr, 0);
+    if (requiredLength == 0)
+    {
+        return value;
+    }
+
+    std::wstring expanded(static_cast<size_t>(requiredLength), L'\0');
+    const DWORD expandedLength = ExpandEnvironmentStringsW(value.c_str(), expanded.data(), requiredLength);
+    if (expandedLength == 0 || expandedLength > requiredLength)
+    {
+        return value;
+    }
+
+    expanded.resize(static_cast<size_t>(expandedLength) - 1);
+    return expanded;
+}
+
 bool ReadIniBool(const wchar_t* key, bool defaultValue, const std::wstring& configPath)
 {
     return GetPrivateProfileIntW(L"General", key, defaultValue ? 1 : 0, configPath.c_str()) != 0;
@@ -69,7 +93,7 @@ BridgeConfig LoadConfig()
     config.configPath = BuildConfigPath();
     EnsureDefaultConfigExists(config.configPath);
 
-    config.vsCodePath = ReadIniString(L"VsCodePath", kDefaultVsCodePath, config.configPath);
+    config.vsCodePath = ExpandEnvironmentVariables(ReadIniString(L"VsCodePath", kDefaultVsCodePath, config.configPath));
     config.forceOpenInVsCode = ReadIniBool(L"ForceOpenInVsCode", false, config.configPath);
     config.showMainWindow = ReadIniBool(L"ShowMainWindow", false, config.configPath);
     config.waitForDocumentMs = ReadIniLong(L"WaitForDocumentMs", 3000, config.configPath);
@@ -85,7 +109,7 @@ BridgeConfig LoadConfig()
     }
     if (config.vsCodePath.empty())
     {
-        config.vsCodePath = kDefaultVsCodePath;
+        config.vsCodePath = ExpandEnvironmentVariables(kDefaultVsCodePath);
     }
 
     return config;

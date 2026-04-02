@@ -879,8 +879,9 @@ void CopyDisplayTextToClipboard(HWND owner)
     }
 
     const int length = GetWindowTextLengthW(g_editControl);
-    std::wstring text(static_cast<size_t>(length), L'\0');
+    std::wstring text(static_cast<size_t>(length) + 1, L'\0');
     GetWindowTextW(g_editControl, text.data(), length + 1);
+    text.resize(static_cast<size_t>(length));
 
     if (!OpenClipboard(owner))
     {
