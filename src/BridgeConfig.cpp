@@ -5,6 +5,9 @@
 namespace
 {
 constexpr wchar_t kDefaultVsCodePath[] = L"%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\Code.exe";
+constexpr wchar_t kDefaultVsCodeFileNameRegex[] = L".*\\.json$";
+constexpr wchar_t kDefaultNotepadPlusPlusPath[] = L"%ProgramFiles%\\Notepad++\\notepad++.exe";
+constexpr wchar_t kDefaultNotepadPlusPlusFileNameRegex[] = L".*\\.log$";
 constexpr wchar_t kConfigFileName[] = L"CodeRouteBridge.ini";
 
 std::wstring GetExeDirectory()
@@ -81,6 +84,13 @@ void EnsureDefaultConfigExists(const std::wstring& configPath)
     }
 
     WritePrivateProfileStringW(L"General", L"VsCodePath", kDefaultVsCodePath, configPath.c_str());
+    WritePrivateProfileStringW(L"General", L"VsCodeFileNameRegex", kDefaultVsCodeFileNameRegex, configPath.c_str());
+    WritePrivateProfileStringW(L"General", L"NotepadPlusPlusPath", kDefaultNotepadPlusPlusPath, configPath.c_str());
+    WritePrivateProfileStringW(
+        L"General",
+        L"NotepadPlusPlusFileNameRegex",
+        kDefaultNotepadPlusPlusFileNameRegex,
+        configPath.c_str());
     WritePrivateProfileStringW(L"General", L"ForceOpenInVsCode", L"0", configPath.c_str());
     WritePrivateProfileStringW(L"General", L"ShowMainWindow", L"0", configPath.c_str());
     WritePrivateProfileStringW(L"General", L"WaitForDocumentMs", L"3000", configPath.c_str());
@@ -94,6 +104,13 @@ BridgeConfig LoadConfig()
     EnsureDefaultConfigExists(config.configPath);
 
     config.vsCodePath = ExpandEnvironmentVariables(ReadIniString(L"VsCodePath", kDefaultVsCodePath, config.configPath));
+    config.vsCodeFileNameRegex = ReadIniString(L"VsCodeFileNameRegex", kDefaultVsCodeFileNameRegex, config.configPath);
+    config.notepadPlusPlusPath = ExpandEnvironmentVariables(
+        ReadIniString(L"NotepadPlusPlusPath", kDefaultNotepadPlusPlusPath, config.configPath));
+    config.notepadPlusPlusFileNameRegex = ReadIniString(
+        L"NotepadPlusPlusFileNameRegex",
+        kDefaultNotepadPlusPlusFileNameRegex,
+        config.configPath);
     config.forceOpenInVsCode = ReadIniBool(L"ForceOpenInVsCode", false, config.configPath);
     config.showMainWindow = ReadIniBool(L"ShowMainWindow", false, config.configPath);
     config.waitForDocumentMs = ReadIniLong(L"WaitForDocumentMs", 3000, config.configPath);

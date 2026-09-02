@@ -682,6 +682,15 @@ std::wstring BuildDisplayText()
     text += L"VsCodePath: ";
     text += config.vsCodePath;
     text += L"\r\n";
+    text += L"VsCodeFileNameRegex: ";
+    text += config.vsCodeFileNameRegex;
+    text += L"\r\n";
+    text += L"NotepadPlusPlusPath: ";
+    text += config.notepadPlusPlusPath;
+    text += L"\r\n";
+    text += L"NotepadPlusPlusFileNameRegex: ";
+    text += config.notepadPlusPlusFileNameRegex;
+    text += L"\r\n";
     text += L"ForceOpenInVsCode: ";
     text += config.forceOpenInVsCode ? L"true" : L"false";
     text += L"\r\n";

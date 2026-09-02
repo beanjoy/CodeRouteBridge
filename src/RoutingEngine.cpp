@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cwctype>
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -660,6 +661,83 @@ std::wstring BuildCommandLine(const std::wstring& executablePath, const std::vec
     return commandLine;
 }
 
+bool MatchesFileNameRegex(
+    const std::wstring& targetPath,
+    const std::wstring& pattern,
+    const wchar_t* configKey)
+{
+    if (pattern.empty())
+    {
+        return false;
+    }
+
+    try
+    {
+        const std::wregex expression(
+            pattern,
+            std::regex_constants::ECMAScript | std::regex_constants::icase);
+        return std::regex_match(GetBaseName(targetPath), expression);
+    }
+    catch (const std::regex_error&)
+    {
+        AppendTraceLine(std::wstring(L"Invalid regular expression in ") + configKey + L": " + pattern);
+        return false;
+    }
+}
+
+bool LaunchNotepadPlusPlus(const ParsedRequest& request, std::wstring* errorMessage)
+{
+    const BridgeConfig& config = GetBridgeConfig();
+    AppendTraceLine(L"Action: open the file in Notepad++");
+    if (!PathExists(config.notepadPlusPlusPath))
+    {
+        if (errorMessage != nullptr)
+        {
+            *errorMessage = std::wstring(L"Notepad++ was not found: ") + config.notepadPlusPlusPath;
+            AppendTraceLine(*errorMessage);
+        }
+        return false;
+    }
+
+    std::vector<std::wstring> arguments;
+    if (request.line > 0)
+    {
+        arguments.emplace_back(L"-n" + std::to_wstring(request.line));
+        arguments.emplace_back(L"-c" + std::to_wstring(request.column > 0 ? request.column : 1));
+    }
+    arguments.push_back(request.targetPath);
+
+    STARTUPINFOW startupInfo{};
+    startupInfo.cb = sizeof(startupInfo);
+    PROCESS_INFORMATION processInfo{};
+    std::wstring commandLine = BuildCommandLine(config.notepadPlusPlusPath, arguments);
+    const BOOL success = CreateProcessW(
+        config.notepadPlusPlusPath.c_str(),
+        commandLine.data(),
+        nullptr,
+        nullptr,
+        FALSE,
+        0,
+        nullptr,
+        nullptr,
+        &startupInfo,
+        &processInfo);
+    if (success == FALSE)
+    {
+        if (errorMessage != nullptr)
+        {
+            *errorMessage = std::wstring(L"Failed to launch Notepad++. Win32 error: ") + std::to_wstring(GetLastError());
+            AppendTraceLine(*errorMessage);
+        }
+        return false;
+    }
+
+    AppendTraceLine(std::wstring(L"Notepad++ Path: ") + config.notepadPlusPlusPath);
+    CloseHandle(processInfo.hThread);
+    CloseHandle(processInfo.hProcess);
+    return true;
+}
+
 bool LaunchRealVsCode(const ParsedRequest& request, std::wstring* errorMessage)
 {
     const BridgeConfig& config = GetBridgeConfig();
@@ -1088,6 +1166,32 @@ bool TryExecuteRouting(std::wstring* errorMessage)
         AppendTraceLine(
             std::wstring(L"Requested Position: line=") + std::to_wstring(request.line) +
             L", column=" + std::to_wstring(request.column));
+    }
+
+    if (request.targetKind == TargetKind::File &&
+        MatchesFileNameRegex(request.targetPath, config.vsCodeFileNameRegex, L"VsCodeFileNameRegex"))
+    {
+        AppendTraceLine(L"Match Result: the file name matched VsCodeFileNameRegex.");
+        return LaunchRealVsCode(request, errorMessage);
+    }
+
+    if (request.targetKind == TargetKind::File &&
+        MatchesFileNameRegex(
+            request.targetPath,
+            config.notepadPlusPlusFileNameRegex,
+            L"NotepadPlusPlusFileNameRegex"))
+    {
+        AppendTraceLine(L"Match Result: the file name matched NotepadPlusPlusFileNameRegex.");
+        std::wstring notepadPlusPlusError;
+        if (LaunchNotepadPlusPlus(request, &notepadPlusPlusError))
+        {
+            if (errorMessage != nullptr)
+            {
+                errorMessage->clear();
+            }
+            return true;
+        }
+        AppendTraceLine(L"Notepad++ routing failed; continue with the original Visual Studio/VS Code routing.");
     }
 
     const std::vector<VsRuntimeInstance> instances = EnumerateInstances();

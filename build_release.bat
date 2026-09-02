@@ -36,6 +36,9 @@ if not exist "%OUTPUT_CONFIG%" (
     >"%OUTPUT_CONFIG%" (
         echo [General]
         echo VsCodePath=%%LOCALAPPDATA%%\Programs\Microsoft VS Code\Code.exe
+        echo VsCodeFileNameRegex=.*\.json$
+        echo NotepadPlusPlusPath=%%ProgramFiles%%\Notepad++\notepad++.exe
+        echo NotepadPlusPlusFileNameRegex=.*\.log$
         echo ForceOpenInVsCode=0
         echo ShowMainWindow=0
         echo WaitForDocumentMs=3000

@@ -5,6 +5,9 @@
 struct BridgeConfig
 {
     std::wstring vsCodePath;
+    std::wstring vsCodeFileNameRegex;
+    std::wstring notepadPlusPlusPath;
+    std::wstring notepadPlusPlusFileNameRegex;
     bool forceOpenInVsCode = false;
     bool showMainWindow = false;
     long waitForDocumentMs = 3000;
